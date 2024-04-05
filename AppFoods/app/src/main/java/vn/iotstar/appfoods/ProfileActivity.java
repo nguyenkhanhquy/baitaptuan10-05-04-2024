@@ -41,6 +41,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
             gender = findViewById(R.id.textViewGender);
             btnLogout = findViewById(R.id.buttonLogout);
             imageViewprofile = findViewById(R.id.imageViewProfile);
+
             User user = SharedPrefManager.getInstance(this).getUSer();
             id.setText(String.valueOf(user.getId()));
             userEmail.setText(user.getEmail());
@@ -71,6 +72,8 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
         } else if (view.equals(imageViewprofile)) {
             // Nếu nhấn vào imageViewprofile, mở MainActivity
             Intent intent = new Intent(ProfileActivity.this, MainActivity.class);
+            User user = SharedPrefManager.getInstance(this).getUSer();
+            intent.putExtra("user", user); // Truyền dữ liệu qua Intent
             startActivity(intent);
         }
     }

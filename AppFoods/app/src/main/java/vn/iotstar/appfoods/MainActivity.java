@@ -26,6 +26,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -34,7 +35,6 @@ import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -47,12 +47,14 @@ import vn.iotstar.appfoods.Utils.RealPathUtil;
 public class MainActivity extends AppCompatActivity {
     Button btnChoose, btnUpload;
     ImageView imageViewChoose, imageViewUpload;
-    EditText editTextUserName;
-    TextView textViewUserName;
+    EditText editTextId;
+    TextView textViewId;
     private Uri mUri;
     private ProgressDialog mProgressDialog;
     public static final int MY_REQUEST_CODE = 100;
     public static final String TAG = MainActivity.class.getName();
+
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,23 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Thiết lập Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Đặt tiêu đề cho Toolbar
+        getSupportActionBar().setTitle("Back");
+        // Hiển thị nút "Back"
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         AnhXa();
+
+        // Nhận dữ liệu người dùng từ Intent
+        Intent intent = getIntent();
+        if(intent.hasExtra("user")) {
+            user = (User) intent.getSerializableExtra("user");
+        }
+        editTextId.setText(String.valueOf(user.getId()));
 
         mProgressDialog = new ProgressDialog(MainActivity.this);
         mProgressDialog.setMessage("Please wait upload...");
@@ -82,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mUri != null) {
-                    uploadImage1();
+                    UploadImage1();
                 } else {
                     Toast.makeText(MainActivity.this, "mUri null", Toast.LENGTH_LONG).show();
                 }
@@ -90,11 +108,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void uploadImage1() {
+    @Override
+    public boolean onSupportNavigateUp() {
+        // Xử lý khi nút "Back" được nhấn
+        onBackPressed();
+
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Kết thúc hoạt động hiện tại
+        return true;
+    }
+
+    public void UploadImage1() {
         mProgressDialog.show();
 
-        String username = editTextUserName.getText().toString().trim();
-        RequestBody requestUserName = RequestBody.create(MediaType.parse("multipart/form-data"), username);
+        String id = editTextId.getText().toString().trim();
+        RequestBody requestUserName = RequestBody.create(MediaType.parse("multipart/form-data"), id);
 
         String IMAGE_PATH = RealPathUtil.getRealPath(this, mUri);
         Log.e("ffff", IMAGE_PATH);
@@ -104,26 +133,47 @@ public class MainActivity extends AppCompatActivity {
         MultipartBody.Part partbodyavatar =
                 MultipartBody.Part.createFormData(Const.MY_IMAGES, file.getName(), requestFile);
 
-        ServiceAPI.serviceapi.upload(requestUserName, partbodyavatar).enqueue(new Callback<List<ImagesUpload>>() {
+//        ServiceAPI.serviceapi.upload(requestUserName, partbodyavatar).enqueue(new Callback<List<ImageUpload>>() {
+//            @Override
+//            public void onResponse(Call<List<ImageUpload>> call, Response<List<ImageUpload>> response) {
+//                mProgressDialog.dismiss();
+//                List<ImageUpload> imageUpload = response.body();
+//                if (imageUpload.size() > 0) {
+//                    for (int i = 0; i < imageUpload.size(); i++) {
+//                        textViewUserName.setText(imageUpload.get(i).getUsername());
+//                        Glide.with(MainActivity.this)
+//                                .load(imageUpload.get(i).getAvatar())
+//                                .into(imageViewUpload);
+//                        Toast.makeText(MainActivity.this, "Thành công", Toast.LENGTH_LONG).show();
+//                    }
+//                } else {
+//                    Toast.makeText(MainActivity.this, "Thất bại", Toast.LENGTH_LONG).show();
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<List<ImageUpload>> call, Throwable t) {
+//                mProgressDialog.dismiss();
+//                Log.e("TAG", t.toString());
+//                Toast.makeText(MainActivity.this, "Gọi APT thất bại", Toast.LENGTH_LONG).show();
+//            }
+//        });
+
+        ServiceAPI.serviceapi.upload2(requestUserName, partbodyavatar).enqueue(new Callback<ImageUpload>() {
             @Override
-            public void onResponse(Call<List<ImagesUpload>> call, Response<List<ImagesUpload>> response) {
+            public void onResponse(Call<ImageUpload> call, Response<ImageUpload> response) {
                 mProgressDialog.dismiss();
-                List<ImagesUpload> imagesUpload = response.body();
-                if (imagesUpload.size() > 0) {
-                    for (int i = 0; i < imagesUpload.size(); i++) {
-                        textViewUserName.setText(imagesUpload.get(i).getUsername());
-                        Glide.with(MainActivity.this)
-                                .load(imagesUpload.get(i).getAvatar())
-                                .into(imageViewUpload);
-                        Toast.makeText(MainActivity.this, "Thành công", Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(MainActivity.this, "Thất bại", Toast.LENGTH_LONG).show();
-                }
+                ImageUpload imageUpload = response.body();
+                ImageUpload.Result result = imageUpload.getResult().get(0); // Lấy phần tử đầu tiên trong list
+                textViewId.setText(result.getId());
+                Glide.with(MainActivity.this)
+                        .load(result.getImages())
+                        .into(imageViewUpload);
+                Toast.makeText(MainActivity.this, "Thành công", Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void onFailure(Call<List<ImagesUpload>> call, Throwable t) {
+            public void onFailure(Call<ImageUpload> call, Throwable t) {
                 mProgressDialog.dismiss();
                 Log.e("TAG", t.toString());
                 Toast.makeText(MainActivity.this, "Gọi APT thất bại", Toast.LENGTH_LONG).show();
@@ -135,9 +185,9 @@ public class MainActivity extends AppCompatActivity {
         btnChoose = findViewById(R.id.btnChoose);
         btnUpload = findViewById(R.id.btnUpload);
         imageViewUpload = findViewById(R.id.imgMultipart);
-        editTextUserName = findViewById(R.id.editUserName);
-        textViewUserName = findViewById(R.id.tvUserName);
-        imageViewUpload = findViewById(R.id.imgChoose);
+        editTextId = findViewById(R.id.editId);
+        textViewId = findViewById(R.id.tvId);
+        imageViewChoose = findViewById(R.id.imgChoose);
     }
 
     public static String[] storge_permissions = {
@@ -189,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        mActivityResultLauncher.launch(Intent.createChooser(intent, "Chọn ảnh"));
+        mActivityResultLauncher.launch(Intent.createChooser(intent, "Select Picture"));
     }
 
     private ActivityResultLauncher<Intent> mActivityResultLauncher = registerForActivityResult(

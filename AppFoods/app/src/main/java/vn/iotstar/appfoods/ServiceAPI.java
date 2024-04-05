@@ -17,7 +17,7 @@ import retrofit2.http.POST;
 import retrofit2.http.Part;
 
 public interface ServiceAPI {
-    public static final String BASE_URL = "http://app.iotstar.vn/shoppingapp/";
+    public static final String BASE_URL = "http://app.iotstar.vn/appfoods/";
     Gson gson = new GsonBuilder().setDateFormat("yyyy MM dd HH:mm:ss").create();
 
     ServiceAPI serviceapi = new Retrofit.Builder()
@@ -28,11 +28,16 @@ public interface ServiceAPI {
 
     @Multipart
     @POST("upload.php")
-    Call<List<ImagesUpload>> upload(@Part(Const.MY_USERNAME)RequestBody username,
-                                    @Part MultipartBody.Part avatar);
+    Call<List<ImageUpload>> upload(@Part(Const.MY_ID) RequestBody id,
+                             @Part MultipartBody.Part avatar);
 
     @Multipart
     @POST("upload1.php")
-    Call<Message> upload1(@Part(Const.MY_USERNAME)RequestBody username,
+    Call<Message> upload1(@Part(Const.MY_ID)RequestBody id,
                           @Part MultipartBody.Part avatar);
+
+    @Multipart
+    @POST("updateimages.php")
+    Call<ImageUpload> upload2(@Part(Const.MY_ID) RequestBody id,
+                             @Part MultipartBody.Part avatar);
 }
