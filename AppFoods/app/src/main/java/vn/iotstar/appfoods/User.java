@@ -49,7 +49,13 @@ public class User implements Serializable {
     }
 
     public String getImages() {
-        return images;
+        if (images.startsWith("http://")) {
+            // Thay thế "http://" thành "https://"
+            return images.replace("http://", "https://");
+        } else {
+            // Nếu không bắt đầu bằng "http://", trả về nguyên trạng
+            return images;
+        }
     }
 
     public void setImages(String images) {
